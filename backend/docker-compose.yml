@@ -1,0 +1,65 @@
+services:
+  db:
+    # ... (no changes) ...
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ai
+      POSTGRES_PASSWORD: ai
+      POSTGRES_DB: hiremesh
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai -d hiremesh"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    # ... (no changes) ...
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql+psycopg://ai:ai@db:5432/hiremesh
+      - REDIS_URL=redis://redis:6379/0
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - shared_data:/app/shared  # <--- Critical addition: Connection to shared folder
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql+psycopg://ai:ai@db:5432/hiremesh
+      - REDIS_URL=redis://redis:6379/0
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - shared_data:/app/shared  # <--- Same connection exactly here too
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  shared_data: # <--- Defining the new volume
