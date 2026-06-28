@@ -33,11 +33,10 @@ services:
       - "8000:8000"
     env_file: .env
     environment:
+      # Override only the infra URLs to point at the compose-internal services
+      # (the rest — API keys, Langfuse — come from env_file: .env).
       - DATABASE_URL=postgresql+psycopg://ai:ai@db:5432/hiremesh
       - REDIS_URL=redis://redis:6379/0
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-    volumes:
-      - shared_data:/app/shared  # <--- Critical addition: Connection to shared folder
     depends_on:
       db:
         condition: service_healthy
@@ -51,9 +50,6 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://ai:ai@db:5432/hiremesh
       - REDIS_URL=redis://redis:6379/0
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-    volumes:
-      - shared_data:/app/shared  # <--- Same connection exactly here too
     depends_on:
       db:
         condition: service_healthy
@@ -62,4 +58,3 @@ services:
 
 volumes:
   pgdata:
-  shared_data: # <--- Defining the new volume
