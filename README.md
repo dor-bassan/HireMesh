@@ -86,6 +86,8 @@ LANGFUSE_BASE_URL=https://cloud.langfuse.com
 
 > **Prompts are managed in Langfuse**, not hard-coded. The app fetches `resume-parser-instructions`, `job-analyst-instructions`, and `hr-team-lead-instructions` at startup and **fails fast** if they're missing — so those three prompts must exist in your Langfuse project.
 
+> To run this yourself, create a free Langfuse account and add these three prompts to your project: `resume-parser-instructions`, `job-analyst-instructions`, `hr-team-lead-instructions`. [Brief description of what each prompt should instruct]
+
 ### 2. Install dependencies
 
 ```bash
